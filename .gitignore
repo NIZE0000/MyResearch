@@ -1,10 +1,8 @@
-archive
 lfw_cropped_face
 lfw_funneled
-results
-stanford_cars
-Art
-cats
 images
 DCGAN
 DDPM
+weight
+gen_images
+dataset
