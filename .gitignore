@@ -1,0 +1,8 @@
+weight
+logs/face/
+logs/real
+dataset
+gen_image
+lfw_cropped_face
+lfw_funneled
+text
