@@ -4,16 +4,55 @@ import torch.nn as nn
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 from torch import optim
-from utils import *
 from modules import UNet
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
+
+import os
+import torchvision
+from PIL import Image
+from torch.utils.data import DataLoader
+
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
 
 
+def plot_images(images):
+    plt.figure(figsize=(32, 32))
+    plt.imshow(torch.cat([
+        torch.cat([i for i in images.cpu()], dim=-1),
+    ], dim=-2).permute(1, 2, 0).cpu())
+    plt.show()
+
+
+def save_images(images, path, **kwargs):
+    grid = torchvision.utils.make_grid(images, **kwargs)
+    ndarr = grid.permute(1, 2, 0).to('cpu').numpy()
+    im = Image.fromarray(ndarr)
+    im.save(path)
+
+
+def get_data(args):
+    transforms = torchvision.transforms.Compose([
+        torchvision.transforms.Resize(80),  # args.image_size + 1/4 *args.image_size
+        torchvision.transforms.RandomResizedCrop(args.image_size, scale=(0.8, 1.0)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+    dataset = torchvision.datasets.ImageFolder(args.dataset_path, transform=transforms)
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    return dataloader
+
+
+def setup_logging(run_name):
+    os.makedirs("models", exist_ok=True)
+    os.makedirs("results", exist_ok=True)
+    os.makedirs(os.path.join("models", run_name), exist_ok=True)
+    os.makedirs(os.path.join("results", run_name), exist_ok=True)
+
+
 class Diffusion:
-    def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=256, device="cuda"):
+    def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=64, device="cuda"):
         self.noise_steps = noise_steps
         self.beta_start = beta_start
         self.beta_end = beta_end
@@ -96,12 +135,12 @@ def launch():
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
     args.run_name = "DDPM_Uncondtional"
-    args.epochs = 500
-    args.batch_size = 12
+    args.epochs = 200
+    args.batch_size = 16
     args.image_size = 64
-    args.dataset_path = r"C:\Users\dome\datasets\landscape_img_folder"
+    args.dataset_path = r""
     args.device = "cuda"
-    args.lr = 3e-4
+    args.lr = 1e-4
     train(args)
 
 

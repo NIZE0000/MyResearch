@@ -1,6 +1,5 @@
-weight
-logs/face/
-logs/real/
+weights
+logs/
 dataset
 gen_image
 lfw_cropped_face

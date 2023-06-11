@@ -38,9 +38,11 @@ if __name__ == '__main__':
     parser.add_argument('--message', default='no message', help='Message to log')
     args = parser.parse_args()
 
-    # check the log file exists
+    # Check if the log file exists
     if not os.path.exists(args.log_file):
-        print(f'Log file would create at: {args.log_file}')
+        log_dir = os.path.dirname(args.log_file)
+        os.makedirs(log_dir, exist_ok=True)
+        print(f'Log file directory would be created at: {log_dir}')
 
     # Set up the logger
     setup_logger(args.log_file, args.message)
