@@ -2,7 +2,7 @@ __pycache__
 .vscode
 
 weights
-logs/
+logs
 dataset
 gen_image
 lfw_cropped_face
