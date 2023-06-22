@@ -40,7 +40,7 @@ class SelfAttention(nn.Module):
         self.ff_self = nn.Sequential(
             nn.LayerNorm([channels]),
             nn.Linear(channels, channels),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(channels, channels),
         )
 
@@ -62,7 +62,7 @@ class DoubleConv(nn.Module):
         self.double_conv = nn.Sequential(
             nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
             nn.GroupNorm(1, mid_channels),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.GroupNorm(1, out_channels),
         )
@@ -84,7 +84,7 @@ class Down(nn.Module):
         )
 
         self.emb_layer = nn.Sequential(
-            nn.SiLU(),
+            nn.ReLU(),
             nn.Linear(
                 emb_dim,
                 out_channels
@@ -108,7 +108,7 @@ class Up(nn.Module):
         )
 
         self.emb_layer = nn.Sequential(
-            nn.SiLU(),
+            nn.ReLU(),
             nn.Linear(
                 emb_dim,
                 out_channels
@@ -249,3 +249,20 @@ class UNet_conditional(nn.Module):
         x = self.sa6(x)
         output = self.outc(x)
         return output
+
+def initialize_weights(self):
+    for m in self.modules():
+        if isinstance(m, nn.Conv2d):
+            # Initialize the weights of convolutional layers
+            nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.ConvTranspose2d):
+            # Initialize the weights of transpose convolutional layers
+            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.Linear):
+            # Initialize the weights of linear layers
+            nn.init.xavier_normal_(m.weight)
+            nn.init.constant_(m.bias, 0)
