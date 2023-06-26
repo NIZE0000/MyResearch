@@ -4,7 +4,7 @@ import torch.nn as nn
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 from torch import optim
-from modules import UNet
+from .modules import UNet
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
@@ -92,8 +92,8 @@ class Diffusion:
                     noise = torch.zeros_like(x)
                 x = 1 / torch.sqrt(alpha) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
         model.train()
-        x = (x.clamp(-1, 1) + 1) / 2
-        x = (x * 255).type(torch.uint8)
+        # x = (x.clamp(-1, 1) + 1) / 2
+        # x = (x * 255).type(torch.uint8)
         return x
 
 
