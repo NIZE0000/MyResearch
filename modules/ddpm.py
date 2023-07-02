@@ -5,16 +5,10 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 from torch import optim
 from .modules import UNet
-import logging
-from torch.utils.tensorboard import SummaryWriter
-
 
 import os
-import torchvision
 from PIL import Image
 from torch.utils.data import DataLoader
-
-logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
 
 
 def plot_images(images):
@@ -25,44 +19,13 @@ def plot_images(images):
     plt.show()
 
 
-def save_images(images, path, **kwargs):
-    grid = torchvision.utils.make_grid(images, **kwargs)
-    ndarr = grid.permute(1, 2, 0).to('cpu').numpy()
-    im = Image.fromarray(ndarr)
-    im.save(path)
-
-
-def get_data(args):
-    transforms = torchvision.transforms.Compose([
-        torchvision.transforms.Resize(80),  # args.image_size + 1/4 *args.image_size
-        torchvision.transforms.RandomResizedCrop(args.image_size, scale=(0.8, 1.0)),
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
-    dataset = torchvision.datasets.ImageFolder(args.dataset_path, transform=transforms)
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
-    return dataloader
-
-
-def setup_logging(run_name):
-    os.makedirs("models", exist_ok=True)
-    os.makedirs("results", exist_ok=True)
-    os.makedirs(os.path.join("models", run_name), exist_ok=True)
-    os.makedirs(os.path.join("results", run_name), exist_ok=True)
-
-
 class Diffusion:
-    def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=64, device="cuda", ddim_sampling_eta=None):
+    def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=64, device="cuda"):
         self.noise_steps = noise_steps
         self.beta_start = beta_start
         self.beta_end = beta_end
         self.img_size = img_size
         self.device = device
-
-        # ddim paper
-        self.ddim_sampling_eta = ddim_sampling_eta
-        self.objective = 'pred_noise',
-        self.num_timesteps = int(noise_steps)
 
         self.beta = self.prepare_noise_schedule().to(device)
         self.alpha = 1. - self.beta
@@ -102,38 +65,6 @@ class Diffusion:
         return x
 
 
-def train(args):
-    setup_logging(args.run_name)
-    device = args.device
-    dataloader = get_data(args)
-    model = UNet().to(device)
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
-    mse = nn.MSELoss()
-    diffusion = Diffusion(img_size=args.image_size, device=device)
-    logger = SummaryWriter(os.path.join("runs", args.run_name))
-    l = len(dataloader)
-
-    for epoch in range(args.epochs):
-        logging.info(f"Starting epoch {epoch}:")
-        pbar = tqdm(dataloader)
-        for i, (images, _) in enumerate(pbar):
-            images = images.to(device)
-            t = diffusion.sample_timesteps(images.shape[0]).to(device)
-            x_t, noise = diffusion.noise_images(images, t)
-            predicted_noise = model(x_t, t)
-            loss = mse(noise, predicted_noise)
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            pbar.set_postfix(MSE=loss.item())
-            logger.add_scalar("MSE", loss.item(), global_step=epoch * l + i)
-
-        sampled_images = diffusion.sample(model, n=images.shape[0])
-        save_images(sampled_images, os.path.join("results", args.run_name, f"{epoch}.jpg"))
-        torch.save(model.state_dict(), os.path.join("models", args.run_name, f"ckpt.pt"))
-
 
 def launch():
     import argparse
@@ -146,8 +77,6 @@ def launch():
     args.dataset_path = r""
     args.device = "cuda"
     args.lr = 1e-4
-    train(args)
-
 
 if __name__ == '__main__':
     launch()
