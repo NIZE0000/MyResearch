@@ -165,12 +165,6 @@ class Diffusion:
                     noise = torch.zeros_like(x)
                 x = 1 / torch.sqrt(alpha) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
         model.train()
-        # x = (x.clamp(-1, 1) + 1) / 2
+        # x = (x.clamp(-1, 1) + 1) / 2 #scale to [0,1]
         # x = (x * 255).type(torch.uint8)
         return x
-
-def initialize_weights(model):
-    # Initializes weights according to the DCGAN paper
-    for m in model.modules():
-        if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.BatchNorm2d)):
-            nn.init.normal_(m.weight.data, 0.0, 0.02)

@@ -1,6 +1,6 @@
-numpy==1.23.5
-scipy==1.9.3
-Pillow>=9.1.1
+numpy
+scipy
+pillow
 cv2
 tensorboard
 torch 
