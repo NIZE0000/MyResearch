@@ -74,11 +74,11 @@ if __name__=="__main__":
                           img_size=args.img_size,
                           device=args.device)
 
-    model = UNet().to(args.device)  # Replace with your generative model
+    model = UNet(device=args.device).to(args.device)  # Replace with your generative model
 
     index_weight = 1
 
-    model.load_state_dict(torch.load(f'{args.weight_path}'))
+    model.load_state_dict(torch.load(f'{args.weight_path}',map_location=torch.device(args.device)))
 
 
     # Set the model to evaluation mode
